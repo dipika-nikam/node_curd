@@ -1,0 +1,28 @@
+{
+  "name": "test_pro",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "build": "tsc",
+    "build-container": "npx tsc",
+    "serve": "nodemon app/server.ts",
+    "serve-build": "nodemon build/app/server.js",
+    "debug": "nodemon --inspect app/server.ts",
+    "pm2": "NODE_ENV=production pm2 start build/app/server.js --watch -i max",
+    "pm2:staging": "NODE_ENV=staging pm2 start build/app/server.js --watch -i max",
+    "migrate": "concurrently \"npx tsc\" \"node build/app/models/migrations/index.migration.js\"",
+    "test": "jest",
+    "lint": "eslint \"./app/**/*.{ts,tsx}\"",
+    "lint:fix": "eslint \"./app/**/*.{ts,tsx}\" --fix"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^8.0.4",
+    "nodemon": "^3.0.2",
+    "punycode": "^2.3.1"
+  }
+}
