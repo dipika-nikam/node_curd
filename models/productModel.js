@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+
 const productschema = mongoose.Schema(
     {
         name:{
@@ -9,13 +10,14 @@ const productschema = mongoose.Schema(
 
         quantity:{
             type:Number,
-            require : true,
-            default : 0
+            default: 0,
+            min: [0, 'Quantity cannot be negative'],
         },
 
         price:{
             type : Number,
-            require : true
+            require : true,
+            min: [0, 'Price cannot be negative'],
         }, 
         
         image:{
