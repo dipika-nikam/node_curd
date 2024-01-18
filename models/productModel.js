@@ -1,16 +1,22 @@
+const { Int32 } = require("mongodb");
 const mongoose = require("mongoose");
 
 
 const productschema = mongoose.Schema(
     {
-        name:{
+        product_name:{
             type : String,
-            require : [true, "Please enter name"]
+            require : [true, "Please enter name"],
+            unique:true,
         },
 
-        quantity:{
-            type:Number,
+        quantity: {
+            type: Number,
             default: 0,
+            validate: {
+                validator: Number.isInteger,
+                message: '{VALUE} is not an integer value for quantity',
+            },
             min: [0, 'Quantity cannot be negative'],
         },
 
@@ -21,7 +27,7 @@ const productschema = mongoose.Schema(
         }, 
         
         image:{
-            type: String,
+            type: [String],
             require:false
         }
     },
