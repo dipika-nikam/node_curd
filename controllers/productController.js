@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express()
 const mongoose = require("mongoose")
-const Product = require("../models/productModel")
+const { Image, Product } = require('../models/productModel');
 const Joi = require('joi');
 const { upload, handleMulterError } = require('../middleware/multer');
 
@@ -81,23 +81,30 @@ exports.createProduct = async (req, res) => {
           if (!file.mimetype.startsWith('image')) {
             throw new Error('Invalid image file');
           }
-          const filePath = 'uploads/' + file.originalname;
-          imagePaths.push(filePath);
+          const filePath = 'uploads/' + file.filename;
+          imagePaths.push(filePath);        
         });
         await Promise.all(productPromises);
         const product = await Product.create({
           product_name: value.product_name,
           quantity: value.quantity,
           price: value.price,
-          image: imagePaths,
+          images: imagePaths
         });
-    
+        const imagePromises = imagePaths.map(async (filePath) => {
+          const image = await Image.create({
+            imagePath: filePath,
+            product: product._id,
+          });
+          return image;
+        });
+        await Promise.all(imagePromises);
         res.status(201).json({ message: 'Congratulations! Your product has been successfully created.', data: product });
       } catch (error) {
         if (error.code === 11000 && error.keyPattern && error.keyValue) {
           const duplicateKeyName = Object.keys(error.keyPattern)[0];
           const duplicateKeyValue = error.keyValue[duplicateKeyName];
-          return res.status(400).json({ message: `roduct with the same name already exists.` });
+          return res.status(400).json({ message: `Product with the same name already exists.` });
         } else {
           console.error('Error during product creation:', error);
           return res.status(500).json({ message: 'Internal Server Error' });
@@ -189,28 +196,27 @@ exports.updateProduct = async (req, res) => {
           message: 'Please provide a numerical and positive value for the quantity to proceed',
         });
       }
-    }
-
-    const { id } = req.params;
-    const existingProduct = await Product.findById(id);
-    if (!existingProduct) {
-      return res.status(404).json({ error: 'Requested id of product not found' });
-    }
-    if (req.file) {
-      if (!req.file.mimetype.startsWith('image')) {
-        return res.status(422).json({ message: 'Invalid image file' });
+    }else{
+      const { id } = req.params;
+      const existingProduct = await Product.findById(id);
+      if (!existingProduct) {
+        return res.status(404).json({ error: 'Requested product not found' });
       }
-      const filePath = 'uploads/' + req.file.filename;
-      existingProduct.image = filePath;
-    }
-    Object.assign(existingProduct, value);
-    const updatedProduct = await existingProduct.save();
+      if (req.files && req.files.length > 0) {
+        return res.status(422).json({ message: "You can't update image" });
+      }
+      const updatedProduct = await Product.findByIdAndUpdate(id, value, {
+        new: true, 
+        runValidators: true,
+      });
 
-    res.status(200).json({
-      message: 'Update request has been processed and confirmed successfully',
-      updatedProduct,
-    });
+      res.status(200).json({
+        message: 'Update request has been processed and confirmed successfully',
+        updatedProduct,
+      });
+    }
   } catch (error) {
+    console.log(error);
     const errorMessage = error.message.replace(/\\|"/g, '');
       if (errorMessage.includes('E11000 duplicate key error')) {
         const fieldName = errorMessage.match(/index: (.+?) dup key/);
@@ -223,13 +229,47 @@ exports.updateProduct = async (req, res) => {
    }
 };
 
+
+exports.findProductAndImage = async (req, res) => {
+  try {
+    const { id, imageId } = req.params;
+    const hasOtherParameters = Object.keys(req.params).some(param => param !== 'id' && param !== 'imageId');
+    if (hasOtherParameters || Object.keys(req.query).length > 0 || Object.keys(req.body).length > 0) {
+      return res.status(400).json({ error: 'Only file uploads are allowed, no other parameters are permitted' });
+    }
+    const foundProduct = await Product.findById(id);
+    if (!foundProduct) {
+      return res.status(404).json({ error: 'Requested product not found' });
+    }
+    const foundImage = await Image.findOne({ product: id, _id: imageId });
+    if (!foundImage) {
+      return res.status(404).json({ error: 'Image not found for the given product' });
+    }
+    try{
+      res.status(200).json({
+        foundProduct,
+        foundImage,
+      });
+    }catch(error){
+      console.log(error);
+    }
+    
+  } catch (error) {
+    console.error(error);
+    if (error.name === 'CastError' && error.kind === 'ObjectId') {
+      return res.status(400).json({ error: 'Your ID is not valid Please Check it' });
+    } 
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 //Delete product
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const product = await Product.findByIdAndDelete(id, req.body);
     if (!product) {
-      res.status(404).json({ error: "Requested id of product not found" });
+      res.status(404).json({ error: "Requested product not found" });
     }
     res.status(200).json({ message: "Deletion successful: Your requested data has been removed.", product });
   } catch (error) {
