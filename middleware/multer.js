@@ -2,7 +2,7 @@ const { error } = require('console');
 const multer = require('multer');
 const path = require('path');
 
-const uploadFilePath = path.resolve(__dirname, '../..', 'public/uploads');
+const uploadFilePath = path.resolve(__dirname, '../..', 'test_pro/public/uploads');
 
 const storage = multer.diskStorage({
   destination: uploadFilePath,
@@ -30,24 +30,36 @@ upload.customErrorHandler = function (err, req, res, next) {
   if(!req.file){
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        res.status(400).json({ message: 'File too large. Max size is 5MB.' });
+        res.status(400).json({
+          success : false,
+          message: 'File too large. Max size is 5MB.' });
       } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-        res.status(400).json({ message: 'You added maximum 2 files.' });
+        res.status(400).json({ 
+          success : false,
+          message: 'You added maximum 2 files.' });
       }
     } else if (err) {
-      res.status(500).json({ message: err.message });
+      res.status(500).json({ 
+        success : false,
+        message: err.message });
     } else {
       next();
     }
   }else{
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        res.status(400).json({ message: 'File too large. Max size is 5MB.' });
+        res.status(400).json({ 
+          success : false,
+          message: 'File too large. Max size is 5MB.' });
       } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-        res.status(400).json({ message: 'You added maximum 1 files.' });
+        res.status(400).json({ 
+          success : false,
+          message: 'You added maximum 1 files.' });
       }
     } else if (err) {
-      res.status(500).json({ message: err.message });
+      res.status(500).json({
+        success : false,
+        message: err.message });
     } else {
       next();
     }
