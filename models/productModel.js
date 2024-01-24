@@ -1,10 +1,11 @@
-const { string } = require("joi");
 const mongoose = require("mongoose");
+const User = require('./userModel')
 
 
 
 const productSchema = mongoose.Schema(
   {
+    user_id: [{ type: mongoose.Schema.Types.ObjectId, ref: User }],
     product_name: {
       type: String,
       required: [true, "Please enter name"],

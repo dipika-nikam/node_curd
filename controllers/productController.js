@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path'); 
 const { Image, Product } = require('../models/productModel');
 const Joi = require('joi');
+const jwt = require('jsonwebtoken');
+
 
 
 app.use(express.json())
@@ -75,6 +77,7 @@ exports.createProduct = async (req, res) => {
       }
     }
     const file = req.files;
+    const user = req.user
     if (!file) {
       const product = await Product.create({
         ...value,
@@ -100,6 +103,8 @@ exports.createProduct = async (req, res) => {
           price: value.price,
           images: imagePaths
         });
+        product.user_id = user.id;
+        await product.save();
         const imagePromises = imagePaths.map(async (filePath) => {
           const image = await Image.create({
             imagePath: filePath,
@@ -108,9 +113,11 @@ exports.createProduct = async (req, res) => {
           return image;
         });
         await Promise.all(imagePromises);
+        const responseUser = { ...product.toObject() };
+        delete responseUser.user_id;
         res.status(201).json({ success : true,
-          data: product ,
-           message: 'Congratulations! Your product has been successfully created.'});
+          data: responseUser ,
+          message: 'Congratulations! Your product has been successfully created.'});
       } catch (error) {
         if (error.code === 11000 && error.keyPattern && error.keyValue) {
           const duplicateKeyName = Object.keys(error.keyPattern)[0];
@@ -379,9 +386,6 @@ exports.findProductAndImage = async (req, res) => {
       new: true,
       runValidators: true,
     });
-
-
-    // Send a single response with all the necessary data
     res.status(200).json({
       success:true,
       data:updatedProduct,

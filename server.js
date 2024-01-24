@@ -6,10 +6,16 @@ const productRoutes = require('./routes/routers');
 const config = require('./database/database');
 const multerMiddleware = require('./middleware/multer')
 const path = require('path');
+const authRoutes = require('./models/userModel');
+const protectedRoute = require('./routes/protectedRoute');
 
 const app = express();
 const port = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, '/public')));
+
+app.use(express.json());
+app.use('/auth', authRoutes);
+app.use('/protected', protectedRoute);
 
 mongoose.connect(config.url, config.options)
   .then(() => {
