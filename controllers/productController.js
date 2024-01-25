@@ -147,11 +147,14 @@ exports.createProduct = async (req, res) => {
 //Get all products
 exports.getAllProducts = async (req, res) => {
   try {
+    const tokenWithoutBearer = token.split(' ')[1];
+    const decodedToken = jwt.verify(tokenWithoutBearer, process.env.JWT_SECRET); 
+    console.log(decodedToken);
     const product = await Product.find({});
     res.status(200).json({success : true, data : product, message:"Retrieve all product data"});
   } catch (error) {
     console.error(error);
-    res.status(404).json({message: "Requested id Data not found" });
+    res.status(404).json({message: "Requested user Data not found" });
   }
 }
 

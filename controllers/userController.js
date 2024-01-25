@@ -326,28 +326,3 @@ exports.resetPassword = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 }
-
-async function sendResetPasswordEmail(email, resetToken) {
-    const transporter = nodemailer.createTransport({
-        host: "sandbox.smtp.mailtrap.io",
-        port: 587,
-        auth: {
-            user: "bec4c527638753",
-            pass: "bf8fa20348bab2",
-        },
-    });
-
-    const mailOptions = {
-        from: 'dipika.infynno@gmail.com',
-        to: email,
-        subject: 'Reset Your Password',
-        text: `Click the following link to reset your password: http://localhost:3000/reset-password?token=${resetToken}`,
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log('Reset password email sent successfully');
-    } catch (error) {
-        console.error('Error sending reset password email:', error);
-    }
-}
